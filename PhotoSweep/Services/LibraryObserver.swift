@@ -50,6 +50,14 @@ final class LibraryObserver: NSObject, PHPhotoLibraryChangeObserver {
     /// `PHChange` is not `Sendable`: carrying it across a `Task` boundary warns, and the
     /// usual ways of silencing that warning are all banned in this project. A plain GCD hop
     /// moves the same object to the main queue with no isolation claim attached to it.
+    ///
+    /// This does emit one warning under Swift 5 — "capture of 'self' with non-Sendable type
+    /// 'LibraryObserver?' in a '@Sendable' closure" — and it is left in place deliberately.
+    /// The code is correct: weak capture plus a main-queue hop is the textbook shape, and
+    /// the callback only ever runs on the main queue. Every way of silencing it makes things
+    /// worse — `@unchecked Sendable` is banned here, and marking `onChange` `@Sendable` only
+    /// moves the same warning to whoever assigns it (which is `AppModel`, a `@MainActor`
+    /// type, so it cannot satisfy it either). Under Swift 6 this would need a real redesign.
     nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }

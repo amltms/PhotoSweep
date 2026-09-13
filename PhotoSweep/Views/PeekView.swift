@@ -38,20 +38,14 @@ struct PeekView: View {
             }
             .padding(Theme.screenPadding)
         }
+        // Already on the main actor: a `View`'s `.task` closure inherits the isolation the
+        // `View` conformance gives this type, so `CardImageLoader` is reachable directly.
         .task(id: card.id) {
-            await startLoading()
+            loader.load(card: card, using: model.pipeline)
         }
         .onDisappear {
             loader.cancel()
         }
-    }
-
-    /// `.task`'s closure is `@escaping @Sendable` and does not inherit the view's
-    /// main-actor isolation, so reaching the `@MainActor` `CardImageLoader` needs an
-    /// explicit hop rather than a bare call.
-    @MainActor
-    private func startLoading() {
-        loader.load(card: card, using: model.pipeline)
     }
 
     // MARK: - Image

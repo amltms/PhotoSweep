@@ -12,3 +12,4 @@ xcuserdata/
 .DS_Store
 payload/
 build.log
+dist/

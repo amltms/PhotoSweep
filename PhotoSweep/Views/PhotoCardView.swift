@@ -103,22 +103,17 @@ struct PhotoCardView: View {
         .accessibilityHidden(!isTop)
         // `.task(id:)` rather than `.onAppear`: SwiftUI recycles these views as the deck
         // advances, and `onAppear` would not fire again for the new card.
+        // `.task(id:)` rather than `.onAppear`: the deck recycles this view as the cursor
+        // advances, and `onAppear` would not fire again for the card that replaces this one.
+        // No actor hop is needed — a `View`'s `.task` closure inherits the main-actor
+        // isolation the `View` conformance gives this type, so the call is already on the
+        // main actor. (An `await` here compiles, but warns that nothing asynchronous happens.)
         .task(id: card.id) {
-            await startLoading()
+            loader.load(card: card, using: model.pipeline)
         }
         .onDisappear {
             loader.cancel()
         }
-    }
-
-    /// `.task`'s closure is `@escaping @Sendable` and does not inherit the view's
-    /// main-actor isolation, so reaching `CardImageLoader` — which is `@MainActor` —
-    /// needs an explicit hop. `BinView` sidesteps the same problem by using `.onAppear`;
-    /// that is not available here, because the deck recycles this view and only
-    /// `.task(id:)` fires again when the card underneath it changes.
-    @MainActor
-    private func startLoading() {
-        loader.load(card: card, using: model.pipeline)
     }
 
     // MARK: - Layers
