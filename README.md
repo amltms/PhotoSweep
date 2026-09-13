@@ -31,11 +31,30 @@ open PhotoSweep.xcodeproj
 ```
 
 Then set your own signing team (target *PhotoSweep* ▸ Signing & Capabilities ▸ Team) and run.
-The bundle identifier defaults to `com.example.PhotoSweep`; change it to something of your own
-before you put it on a device.
+The bundle identifier is `com.amltms.photosweep`; change it to something of your own.
 
 There are **no dependencies** — no Swift Package Manager, no CocoaPods, no Carthage, nothing to
 fetch. It is one app target and about thirty Swift files.
+
+### Building without a Mac
+
+There isn't one in this project's development loop, so CI does the compiling.
+`.github/workflows/build.yml` builds on a GitHub-hosted Mac and uploads an **unsigned `.ipa`** as
+a run artifact. It runs on every push; when a build fails, the run's summary page carries a
+de-duplicated **"Compile errors"** block rather than several thousand lines of log.
+
+To get that `.ipa` onto an iPhone from Windows:
+
+1. Download the `PhotoSweep-ipa` artifact from the green run and unzip it.
+2. Install **iTunes from apple.com** — *not* the Microsoft Store build, which omits the drivers
+   the next step needs.
+3. Install [Sideloadly](https://sideloadly.io), plug the phone in, drag the `.ipa` in, and sign in
+   with your Apple ID. It signs the app with your own free provisioning profile at install time,
+   which is exactly why CI leaves the build unsigned.
+4. On the phone: **Settings ▸ General ▸ VPN & Device Management**, tap your Apple ID, **Trust**.
+
+Free provisioning expires after **7 days** — re-run Sideloadly to renew — and allows three
+sideloaded apps at once. A paid Developer account raises that to a year.
 
 ### If the project file will not open
 
@@ -166,10 +185,15 @@ onto another device).
 
 ## Status
 
-**Not yet compiled or run.** It was written on a Windows machine with no Apple toolchain, so no
-build has ever happened. Expect to fix a handful of small build errors on first open.
+**Compiles clean. Never run.**
 
-What *was* done instead, since the compiler was not available: the PhotoKit and SwiftUI-gesture
+It builds on CI against the iOS 17 SDK with no errors and one known warning (documented in
+`LibraryObserver.swift`, where every available fix is worse than the warning). But it has never
+been launched on a device or a simulator, so nothing about its *behaviour* has been observed —
+only its types.
+
+It was written on a Windows machine with no Apple toolchain, so the whole thing was authored
+before a compiler had ever seen it. To make that survivable, the PhotoKit and SwiftUI-gesture
 failure modes were catalogued up front and written into `CONTRACT.md` as rules before any code
 existed; every file was then reviewed in isolation, reviewed again across file boundaries by
 seven independent lenses, had each finding adversarially re-checked against the source before
@@ -178,10 +202,16 @@ defects — an `OptionSet` compared with `==` that would have silently shrunk th
 double-applied rotation, views observing a non-`@Observable` store, a reset that emptied the bin
 while the confirmation promised it would not.
 
-The parts most worth trusting are the ones that were worth getting right up front: the staging
-model, the PhotoKit usage, and the gesture handling. The parts most likely to need a nudge are
-layout and animation timing, which cannot be judged without running them.
+The first real compile then found exactly one error across ~6,300 lines: default argument
+expressions are evaluated at the call site in a *nonisolated* context, so `AppModel`'s
+`settings: AppSettings = AppSettings()` could not build a `@MainActor` type.
 
-Test it on a real device with a real library before trusting it with anything. The staging design
-means the worst a bug can do is show you the wrong photo — the only code that deletes is behind a
-button you press yourself, and behind iOS's own confirmation after that.
+Type-checking is a weak signal about correctness, though. The parts most worth trusting are the
+ones that were worth getting right up front: the staging model, the PhotoKit usage, and the
+gesture handling. The parts most likely to need a nudge are layout and animation timing, which
+cannot be judged without running them — so try it on a real device with a real library before
+trusting it with anything.
+
+The staging design is what makes that safe to do: the worst an undiscovered bug can manage is to
+show you the wrong photo. The only code that deletes sits behind a button you press yourself, and
+behind iOS's own confirmation after that.
