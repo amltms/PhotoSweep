@@ -48,12 +48,19 @@ final class AppModel {
     let store: ReviewStateStore
     let pipeline: ImagePipeline
 
-    init(settings: AppSettings = AppSettings(),
-         store: ReviewStateStore = ReviewStateStore(),
-         pipeline: ImagePipeline = ImagePipeline()) {
-        self.settings = settings
-        self.store = store
-        self.pipeline = pipeline
+    /// The collaborators default to freshly built ones, but they are passed as `nil`
+    /// rather than as default expressions like `settings: AppSettings = AppSettings()`.
+    ///
+    /// A default argument expression is evaluated at the *call site*, in a nonisolated
+    /// context, so building a `@MainActor` type there is an isolation error even though
+    /// this initialiser's own body is main-actor isolated. Constructing them here instead
+    /// keeps `AppModel()` working at every call site.
+    init(settings: AppSettings? = nil,
+         store: ReviewStateStore? = nil,
+         pipeline: ImagePipeline? = nil) {
+        self.settings = settings ?? AppSettings()
+        self.store = store ?? ReviewStateStore()
+        self.pipeline = pipeline ?? ImagePipeline()
     }
 
     // MARK: - Authorisation

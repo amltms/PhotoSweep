@@ -311,9 +311,12 @@ final class AppModel {
     let store: ReviewStateStore
     let pipeline: ImagePipeline
 
-    init(settings: AppSettings = AppSettings(),
-         store: ReviewStateStore = ReviewStateStore(),
-         pipeline: ImagePipeline = ImagePipeline())
+    // Passed as nil rather than as default expressions: a default argument is evaluated
+    // at the call site in a NONISOLATED context, so `= AppSettings()` on a @MainActor
+    // type is an isolation error. They are built inside the body instead.
+    init(settings: AppSettings? = nil,
+         store: ReviewStateStore? = nil,
+         pipeline: ImagePipeline? = nil)
 
     // Authorisation
     private(set) var authStatus: PHAuthorizationStatus
