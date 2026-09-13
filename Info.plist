@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Keys that have no INFOPLIST_KEY_* build-setting equivalent.
+	     Everything else (bundle name, version, orientations, usage strings,
+	     launch screen, scene manifest) is generated from build settings. -->
+
+	<!-- Stops iOS showing its own "Select more photos?" alert on every launch,
+	     so the app decides when to call presentLimitedLibraryPicker(from:). -->
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
+
+	<!-- No networking, no encryption: skips the export-compliance questionnaire. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
