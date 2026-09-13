@@ -28,6 +28,10 @@ enum Theme {
     /// A slightly desaturated red for large fills, where #FF0000 vibrates against dark blue.
     static let redSoft = Color(.sRGB, red: 0.8824, green: 0.1137, blue: 0.1686, opacity: 1)
 
+    /// #0E1018 — one step below `deepBlue`. Used only to weight the bottom of the screen,
+    /// so the background has somewhere to fall away to and the card reads as lifted off it.
+    static let abyss = Color(.sRGB, red: 0.0549, green: 0.0627, blue: 0.0941, opacity: 1)
+
     // MARK: - Semantic
 
     static let screenBackground = deepBlue
@@ -47,8 +51,18 @@ enum Theme {
 
     // MARK: - Gradients
 
+    /// A wash of brand blue at the very top that falls away to near-black at the bottom.
+    ///
+    /// Three stops rather than an even blend: the colour is spent in the top third, so the
+    /// photo — which sits in the middle of the screen — is always against the quietest part
+    /// of the background. A flat two-stop gradient put mid-blue directly behind the card
+    /// and cost it contrast exactly where it mattered.
     static let backgroundGradient = LinearGradient(
-        colors: [mainBlue.opacity(0.55), deepBlue, deepBlue],
+        stops: [
+            .init(color: mainBlue.opacity(0.42), location: 0.0),
+            .init(color: deepBlue, location: 0.45),
+            .init(color: abyss, location: 1.0)
+        ],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -67,9 +81,19 @@ enum Theme {
 
     // MARK: - Metrics
 
-    static let cardCornerRadius: CGFloat = 26
+    static let cardCornerRadius: CGFloat = 28
     static let controlCornerRadius: CGFloat = 16
     static let tileCornerRadius: CGFloat = 12
+
+    // MARK: - Elevation
+    //
+    // The deck is the only place in the app that casts a shadow. On a dark background a
+    // shadow reads as depth rather than as a drop shadow, which is what makes a stack of
+    // cards look like a stack rather than like flat rectangles printed on top of each other.
+
+    static let cardShadow = Color.black.opacity(0.55)
+    static let cardShadowRadius: CGFloat = 24
+    static let cardShadowY: CGFloat = 14
 
     static let screenPadding: CGFloat = 20
     static let stackSpacing: CGFloat = 16

@@ -112,10 +112,7 @@ struct SwipeDeckView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                Text(model.mapping.legend)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(Theme.textTertiary)
-                    .allowsHitTesting(false)
+                directionHint
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
@@ -137,6 +134,44 @@ struct SwipeDeckView: View {
         .onAppear {
             Haptics.prepare()
         }
+    }
+
+    // MARK: - Direction hint
+
+    /// The only thing left under the deck now that the button row is gone.
+    ///
+    /// It stays because this app's bin direction is the opposite of the one everybody's
+    /// thumbs already know, and a wrong guess here costs a photo. It is colour-coded and
+    /// sits at the two screen edges so it reads without being looked at — and it is a
+    /// label, not a control: `allowsHitTesting(false)` keeps it out of the gesture's way.
+    private var directionHint: some View {
+        HStack(spacing: 12) {
+            hintLabel(model.mapping.binIsRight ? .keep : .bin, pointsLeft: true)
+            Spacer(minLength: 0)
+            hintLabel(model.mapping.binIsRight ? .bin : .keep, pointsLeft: false)
+        }
+        .allowsHitTesting(false)
+        // The stamps on the card already announce the decision as the finger moves, and
+        // VoiceOver cannot swipe at all, so this would only be noise in the rotor.
+        .accessibilityHidden(true)
+    }
+
+    private func hintLabel(_ decision: Decision, pointsLeft: Bool) -> some View {
+        let isKeep = decision == .keep
+        return HStack(spacing: 5) {
+            if pointsLeft {
+                Image(systemName: "chevron.left")
+            }
+            Text(isKeep ? Strings.keep : Strings.bin)
+            if !pointsLeft {
+                Image(systemName: "chevron.right")
+            }
+        }
+        .font(.caption.weight(.bold))
+        .textCase(.uppercase)
+        .tracking(1.4)
+        .foregroundStyle(isKeep ? Theme.green : Theme.red)
+        .opacity(0.85)
     }
 
     // MARK: - Layers
@@ -162,8 +197,8 @@ struct SwipeDeckView: View {
     /// The departure this card is the flying copy of, or `nil` if this card is a live one.
     ///
     /// The one rule, asked in both places, so that the list of rows and the way a row is
-    /// drawn can never disagree. Undo is live throughout the tidy-up window
-    /// (`DeckControlsView`) and it puts the departing card straight back into
+    /// drawn can never disagree. Undo is live throughout the tidy-up window (the top bar,
+    /// and the VoiceOver action on the card) and it puts the departing card straight back into
     /// `visibleCards`, so between the undo and the tidy-up timer the same id is both
     /// "departing" and live. Two `ForEach` rows with one id is undefined behaviour in
     /// SwiftUI, so the copy yields to the live card — and, because it has yielded, that

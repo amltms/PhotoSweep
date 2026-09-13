@@ -80,6 +80,13 @@ struct PhotoCardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipShape(cardShape)
         .overlay(cardShape.stroke(Theme.hairline, lineWidth: 1))
+        // Applied after the clip, so the shadow follows the rounded corners rather than
+        // the square bounds. Deeper for the top card so the stack reads front-to-back.
+        .shadow(
+            color: Theme.cardShadow,
+            radius: isTop ? Theme.cardShadowRadius : Theme.cardShadowRadius * 0.6,
+            y: isTop ? Theme.cardShadowY : Theme.cardShadowY * 0.5
+        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(card.accessibilityLabel)
         .accessibilityHint(model.mapping.accessibilityHint)
@@ -101,8 +108,6 @@ struct PhotoCardView: View {
         }
         // Cards behind the top one are scenery; announcing three photos at once is noise.
         .accessibilityHidden(!isTop)
-        // `.task(id:)` rather than `.onAppear`: SwiftUI recycles these views as the deck
-        // advances, and `onAppear` would not fire again for the new card.
         // `.task(id:)` rather than `.onAppear`: the deck recycles this view as the cursor
         // advances, and `onAppear` would not fire again for the card that replaces this one.
         // No actor hop is needed — a `View`'s `.task` closure inherits the main-actor

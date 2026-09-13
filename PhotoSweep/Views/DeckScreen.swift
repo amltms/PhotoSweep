@@ -130,35 +130,33 @@ struct DeckScreen: View {
 
     // MARK: - Deck
 
+    /// Deliberately just a bar and a deck.
+    ///
+    /// There is no row of Keep / Bin buttons under the cards: the gesture is the whole
+    /// interface, and the photo is worth more screen than a second way to press the same
+    /// thing. Nothing is lost to VoiceOver by that — the Keep, Bin and Undo actions live on
+    /// `PhotoCardView` as `accessibilityAction`s, which is where a screen reader looks for
+    /// them anyway, and they were always the real accessible path rather than the buttons.
     private var deck: some View {
-        VStack(spacing: Theme.stackSpacing) {
+        VStack(spacing: 14) {
             topBar
 
             SweepProgressBar(progress: model.progress)
 
             SwipeDeckView(model: model, onPeek: { card in peekCard = card })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            DeckControlsView(model: model, onOpenBin: { isShowingBin = true })
         }
         .padding(.horizontal, Theme.screenPadding)
         .padding(.top, 8)
         .padding(.bottom, Theme.screenPadding)
     }
 
+    /// Close, position, undo, bin. Undo and the bin door are navigation rather than swipe
+    /// actions, so they stay — but as quiet circular glyphs in the chrome, not as buttons
+    /// competing with the card for attention.
     private var topBar: some View {
-        HStack(spacing: 12) {
-            Button {
-                onClose()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
-                    .background(Circle().fill(Theme.surface))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text(Strings.close))
+        HStack(spacing: 10) {
+            circleButton("xmark", label: Strings.close) { onClose() }
 
             Spacer(minLength: 0)
 
@@ -169,15 +167,69 @@ struct DeckScreen: View {
 
             Spacer(minLength: 0)
 
-            Button {
-                isShowingBin = true
-            } label: {
-                PillLabel(systemImage: "trash", text: Formatters.count(model.pendingCount))
+            circleButton(
+                "arrow.uturn.backward",
+                label: Strings.a11yUndoAction,
+                enabled: model.canUndo
+            ) {
+                model.undo()
             }
-            .buttonStyle(.plain)
-            .frame(minWidth: Theme.minimumTapTarget, minHeight: Theme.minimumTapTarget)
-            .accessibilityLabel(Text(Strings.a11yOpenBin))
+
+            binButton
         }
+    }
+
+    /// The one control shape this screen uses, so the chrome cannot drift apart.
+    private func circleButton(
+        _ systemName: String,
+        label: String,
+        enabled: Bool = true,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+                .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
+                .background(Circle().fill(Theme.surface))
+                .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
+        .accessibilityLabel(Text(label))
+    }
+
+    /// The bin door, with the pending count as a badge rather than a number in a pill —
+    /// it has to read at a glance without taking the eye off the photo.
+    private var binButton: some View {
+        Button {
+            isShowingBin = true
+        } label: {
+            Image(systemName: "trash")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+                .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
+                .background(Circle().fill(Theme.surface))
+                .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+                .overlay(alignment: .topTrailing) {
+                    if model.pendingCount > 0 {
+                        Text(Formatters.count(model.pendingCount))
+                            .font(.caption2.weight(.bold))
+                            .monospacedDigit()
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Theme.red))
+                            .overlay(Capsule().stroke(Theme.screenBackground, lineWidth: 2))
+                            .offset(x: 4, y: -2)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(Strings.a11yOpenBin))
+        .accessibilityValue(Formatters.count(model.pendingCount))
     }
 
     /// "12 of 4,182". Counted from what has been reviewed rather than from an array

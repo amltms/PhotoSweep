@@ -66,16 +66,22 @@ struct HomeView: View {
                     Button {
                         isShowingSettings = true
                     } label: {
-                        Image(systemName: "gearshape")
-                            .font(.body.weight(.semibold))
+                        // A centred circle, matching the deck's chrome. The old version
+                        // used `alignment: .trailing` inside the tap-target frame, which
+                        // shoved the glyph to one edge and left it looking mis-padded.
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(Theme.surface))
+                            .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
                             .frame(
                                 width: Theme.minimumTapTarget,
-                                height: Theme.minimumTapTarget,
-                                alignment: .trailing
+                                height: Theme.minimumTapTarget
                             )
-                            .contentShape(Rectangle())
+                            .contentShape(Circle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel(Strings.settings)
                 }
             }

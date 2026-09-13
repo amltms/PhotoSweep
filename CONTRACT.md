@@ -462,8 +462,9 @@ struct PhotoCardView: View {
     let cardWidth: CGFloat
 }
 
-// Views/DeckControlsView.swift
-struct DeckControlsView: View { let model: AppModel; var onOpenBin: () -> Void }
+// (Views/DeckControlsView.swift was removed: the gesture is the whole interface, so
+//  there is no Keep/Bin/Undo button row. Undo and the bin door live in DeckScreen's top
+//  bar, and the accessible path is the accessibilityActions on PhotoCardView.)
 
 // Views/PeekView.swift
 struct PeekView: View { let model: AppModel; let card: DeckCard; var onClose: () -> Void }
